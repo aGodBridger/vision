@@ -1862,8 +1862,8 @@ return Divider
 
 			return Colorpicker
 		end
-	</do>
-	end;
+	end
+end;
 
 -- ========================================
 -- =========== VISIONWARE SETUP ============
