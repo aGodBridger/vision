@@ -82,9 +82,10 @@ do
 	Library.__index = Library
 	Library.Pages.__index = Library.Pages
 	Library.Sections.__index = Library.Sections
-	local LocalPlayer = game:GetService('Players').LocalPlayer;
-	local Mouse = LocalPlayer:GetMouse();
-	local TweenService = game:GetService("TweenService");
+local LocalPlayer = game:GetService('Players').LocalPlayer;
+local Mouse = LocalPlayer:GetMouse();
+local TweenService = game:GetService("TweenService");
+local UserInputService = game:GetService("UserInputService");
 
 	function Library:Connection(Signal, Callback)
 		local Con = Signal:Connect(Callback)
@@ -536,6 +537,7 @@ do
 	function Library:Watermark(Properties)
 		local Watermark = {
 			Name = (Properties.Name or Properties.name or "watermark text | placeholder");
+			ShowFPS = false;
 		}
 		
 		local Outline = Instance.new("Frame")
@@ -589,10 +591,15 @@ do
 		Accent.Parent = Outline
 		
 		function Watermark:UpdateText(NewText)
-			Value.Text = NewText;
+			self.Name = NewText
+			Value.Text = NewText .. (self.ShowFPS and " | FPS: 0" or "")
 		end;
 		function Watermark:SetVisible(State)
 			Outline.Visible = State;
+		end;
+		function Watermark:SetFPS(State)
+			self.ShowFPS = State
+			self:UpdateText(self.Name)
 		end;
 		
 		return Watermark
@@ -1574,10 +1581,289 @@ do
 
 			Outline.Parent = NewDivider
 			
-			return Divider
+return Divider
 		end
+
+		function Sections:Colorpicker(Properties)
+			local Properties = Properties or {}
+			local Colorpicker = {
+				Window = self.Window,
+				Page = self.Page,
+				Section = self,
+				Name = Properties.Name or "Colorpicker",
+				State = (Properties.state or Properties.State or Properties.default or Properties.Default or Color3.fromRGB(255, 88, 166)),
+				Callback = (Properties.callback or Properties.Callback or function() end),
+				Flag = (Properties.flag or Properties.Flag or Library.NextFlag()),
+				Open = false,
+			}
+
+			local NewColor = Instance.new("Frame")
+			NewColor.Name = "NewColor"
+			NewColor.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			NewColor.BackgroundTransparency = 1
+			NewColor.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			NewColor.BorderSizePixel = 0
+			NewColor.Size = UDim2.new(1, 0, 0, 10)
+			NewColor.Parent = Colorpicker.Section.Elements.SectionContent
+
+			local Title = Instance.new("TextLabel")
+			Title.Name = "Title"
+			Title.FontFace = Font.fromEnum(Enum.Font.RobotoMono)
+			Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Title.TextSize = 12
+			Title.TextStrokeTransparency = 0
+			Title.TextXAlignment = Enum.TextXAlignment.Left
+			Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			Title.BackgroundTransparency = 1
+			Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			Title.BorderSizePixel = 0
+			Title.Size = UDim2.new(1, -40, 1, 0)
+			Title.Parent = NewColor
+			Title.Text = Colorpicker.Name
+
+			local Outline = Instance.new("Frame")
+			Outline.Name = "Outline"
+			Outline.AnchorPoint = Vector2.new(0, 0.5)
+			Outline.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			Outline.Position = UDim2.new(1, -30, 0.5, 0)
+			Outline.Size = UDim2.new(0, 30, 0, 12)
+
+			local Inline = Instance.new("TextButton")
+			Inline.Name = "Inline"
+			Inline.BackgroundColor3 = Colorpicker.State
+			Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			Inline.BorderSizePixel = 0
+			Inline.Position = UDim2.new(0, 1, 0, 1)
+			Inline.Size = UDim2.new(1, -2, 1, -2)
+			Inline.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+			Inline.Text = ""
+			Inline.TextColor3 = Color3.fromRGB(0, 0, 0)
+			Inline.TextSize = 14
+			Inline.AutoButtonColor = false
+
+			Inline.Parent = Outline
+			Outline.Parent = NewColor
+
+			local PickerFrame = Instance.new("Frame")
+			PickerFrame.Name = "PickerFrame"
+			PickerFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+			PickerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			PickerFrame.BorderSizePixel = 0
+			PickerFrame.Position = UDim2.new(1, 5, 0, 0)
+			PickerFrame.Size = UDim2.new(0, 180, 0, 160)
+			PickerFrame.Visible = false
+			PickerFrame.ZIndex = 10
+			PickerFrame.Parent = Outline
+
+			local PickerOutline = Instance.new("Frame")
+			PickerOutline.Name = "PickerOutline"
+			PickerOutline.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			PickerOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			PickerOutline.Position = UDim2.new(0, 1, 0, 1)
+			PickerOutline.Size = UDim2.new(1, -2, 1, -2)
+			PickerOutline.Parent = PickerFrame
+
+			local HueSat = Instance.new("ImageButton")
+			HueSat.Name = "HueSat"
+			HueSat.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+			HueSat.BorderSizePixel = 0
+			HueSat.Position = UDim2.new(0, 5, 0, 5)
+			HueSat.Size = UDim2.new(1, -30, 1, -30)
+			HueSat.Image = "rbxassetid://4155801252"
+			HueSat.ZIndex = 10
+
+			local HueSatSelector = Instance.new("Frame")
+			HueSatSelector.Name = "HueSatSelector"
+			HueSatSelector.AnchorPoint = Vector2.new(0.5, 0.5)
+			HueSatSelector.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			HueSatSelector.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			HueSatSelector.BorderSizePixel = 2
+			HueSatSelector.Position = UDim2.new(0, 0, 0, 0)
+			HueSatSelector.Size = UDim2.new(0, 6, 0, 6)
+			HueSatSelector.Parent = HueSat
+
+			local HueBar = Instance.new("ImageButton")
+			HueBar.Name = "HueBar"
+			HueBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			HueBar.BorderSizePixel = 0
+			HueBar.Position = UDim2.new(1, -20, 0, 5)
+			HueBar.Size = UDim2.new(0, 15, 1, -30)
+			HueBar.Image = "rbxassetid://3641079629"
+			HueBar.ZIndex = 10
+
+			local HueSelector = Instance.new("Frame")
+			HueSelector.Name = "HueSelector"
+			HueSelector.AnchorPoint = Vector2.new(0, 0.5)
+			HueSelector.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			HueSelector.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			HueSelector.BorderSizePixel = 2
+			HueSelector.Position = UDim2.new(0, 0, 0, 0)
+			HueSelector.Size = UDim2.new(1, 0, 0, 4)
+			HueSelector.Parent = HueBar
+
+			HueBar.Parent = PickerOutline
+			HueSat.Parent = PickerOutline
+			PickerOutline.Parent = PickerFrame
+
+			local AlphaBar = Instance.new("ImageButton")
+			AlphaBar.Name = "AlphaBar"
+			AlphaBar.BackgroundColor3 = Colorpicker.State
+			AlphaBar.BorderSizePixel = 0
+			AlphaBar.Position = UDim2.new(0, 5, 1, -20)
+			AlphaBar.Size = UDim2.new(1, -30, 0, 15)
+			AlphaBar.Image = "rbxassetid://4155801252"
+			AlphaBar.BackgroundTransparency = 1
+			AlphaBar.ZIndex = 10
+
+			local AlphaSelector = Instance.new("Frame")
+			AlphaSelector.Name = "AlphaSelector"
+			AlphaSelector.AnchorPoint = Vector2.new(0.5, 0.5)
+			AlphaSelector.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			AlphaSelector.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			AlphaSelector.BorderSizePixel = 2
+			AlphaSelector.Position = UDim2.new(1, 0, 0.5, 0)
+			AlphaSelector.Size = UDim2.new(0, 4, 1, 4)
+			AlphaSelector.Parent = AlphaBar
+
+			AlphaBar.Parent = PickerOutline
+
+			local HexBox = Instance.new("TextBox")
+			HexBox.Name = "HexBox"
+			HexBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+			HexBox.BorderColor3 = Color3.fromRGB(50, 50, 50)
+			HexBox.BorderSizePixel = 0
+			HexBox.Position = UDim2.new(0, 5, 1, -38)
+			HexBox.Size = UDim2.new(1, -10, 0, 18)
+			HexBox.FontFace = Font.fromEnum(Enum.Font.RobotoMono)
+			HexBox.Text = "#FF58A6"
+			HexBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+			HexBox.TextSize = 11
+			HexBox.TextStrokeTransparency = 0
+			HexBox.ZIndex = 10
+			HexBox.Parent = PickerOutline
+
+			local function UpdateColor()
+				local h, s, v = Colorpicker.State:ToHSV()
+				HueSat.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+				HueSatSelector.Position = UDim2.new(s, 0, 1 - v, 0)
+				HueSelector.Position = UDim2.new(0, 0, h, 0)
+				AlphaBar.BackgroundColor3 = Color3.fromHSV(h, s, 1)
+				AlphaSelector.Position = UDim2.new(1, 0, 0.5, 0)
+				Inline.BackgroundColor3 = Colorpicker.State
+				HexBox.Text = "#" .. Colorpicker.State:ToHex()
+				Library.Flags[Colorpicker.Flag] = Colorpicker.State
+				Colorpicker.Callback(Colorpicker.State)
+			end
+
+			local function SetColor(color)
+				Colorpicker.State = color
+				UpdateColor()
+			end
+
+			local DraggingHueSat = false
+			local DraggingHue = false
+			local DraggingAlpha = false
+
+			HueSat.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					DraggingHueSat = true
+				end
+			end)
+
+			HueSat.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					DraggingHueSat = false
+				end
+			end)
+
+			HueBar.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					DraggingHue = true
+				end
+			end)
+
+			HueBar.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					DraggingHue = false
+				end
+			end)
+
+			AlphaBar.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					DraggingAlpha = true
+				end
+			end)
+
+			AlphaBar.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					DraggingAlpha = false
+				end
+			end)
+
+			UserInputService.InputChanged:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+					if DraggingHueSat then
+						local relX = math.clamp((input.Position.X - HueSat.AbsolutePosition.X) / HueSat.AbsoluteSize.X, 0, 1)
+						local relY = math.clamp((input.Position.Y - HueSat.AbsolutePosition.Y) / HueSat.AbsoluteSize.Y, 0, 1)
+						local h, s, v = Colorpicker.State:ToHSV()
+						Colorpicker.State = Color3.fromHSV(h, relX, 1 - relY)
+						UpdateColor()
+					elseif DraggingHue then
+						local relY = math.clamp((input.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
+						local h, s, v = Colorpicker.State:ToHSV()
+						Colorpicker.State = Color3.fromHSV(relY, s, v)
+						UpdateColor()
+					elseif DraggingAlpha then
+						local relX = math.clamp((input.Position.X - AlphaBar.AbsolutePosition.X) / AlphaBar.AbsoluteSize.X, 0, 1)
+						local h, s, v = Colorpicker.State:ToHSV()
+						Colorpicker.State = Color3.fromHSV(h, s, v)
+						Colorpicker.State = Color3.new(Colorpicker.State.R, Colorpicker.State.G, Colorpicker.State.B)
+						UpdateColor()
+					end
+				end
+			end)
+
+			HexBox.FocusLost:Connect(function()
+				local text = HexBox.Text:gsub("#", "")
+				if #text == 6 then
+					local r = tonumber(text:sub(1, 2), 16) / 255
+					local g = tonumber(text:sub(3, 4), 16) / 255
+					local b = tonumber(text:sub(5, 6), 16) / 255
+					if r and g and b then
+						SetColor(Color3.new(r, g, b))
+					end
+				end
+			end)
+
+			Inline.MouseButton1Click:Connect(function()
+				Colorpicker.Open = not Colorpicker.Open
+				PickerFrame.Visible = Colorpicker.Open
+				if Colorpicker.Open then
+					UpdateColor()
+				end
+			end)
+
+			Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
+				if Colorpicker.Open and Input.UserInputType == Enum.UserInputType.MouseButton1 then
+					if not Library:IsMouseOverFrame(PickerFrame) and not Library:IsMouseOverFrame(Inline) then
+						Colorpicker.Open = false
+						PickerFrame.Visible = false
+					end
+				end
+			end)
+
+			function Colorpicker:Set(color)
+				SetColor(color)
+			end
+
+			Library.Flags[Colorpicker.Flag] = Colorpicker.State
+			UpdateColor()
+
+			return Colorpicker
+		end
+	</do>
 	end;
-end;
 
 -- ========================================
 -- =========== VISIONWARE SETUP ============
@@ -1635,6 +1921,10 @@ ESPVisuals:Slider({Name = "ESP Range", Flag = "ESP_Range", Min = 100, Max = 1000
 ESPVisuals:Toggle({Name = "Visible Only", Flag = "ESP_VisibleOnly"})
 ESPVisuals:Toggle({Name = "Team Check", Flag = "ESP_TeamCheck", Default = true})
 
+ESPVisuals:Colorpicker({Name = "Enemy Color", Flag = "ESP_EnemyColor", Default = Color3.fromRGB(255, 50, 50)})
+ESPVisuals:Colorpicker({Name = "Team Color", Flag = "ESP_TeamColor", Default = Color3.fromRGB(50, 255, 50)})
+ESPVisuals:Colorpicker({Name = "Visible Color", Flag = "ESP_VisibleColor", Default = Color3.fromRGB(0, 255, 255)})
+
 -- ========================================
 -- =========== CHAMS ====================
 -- ========================================
@@ -1647,7 +1937,9 @@ ChamsMain:Toggle({Name = "Visible Only", Flag = "Chams_VisibleOnly"})
 ChamsMain:Slider({Name = "Opacity", Flag = "Chams_Opacity", Min = 0, Max = 1, Default = 0.5, Decimals = 2})
 
 ChamsSettings:Toggle({Name = "Team Check", Flag = "Chams_TeamCheck", Default = true})
-ChamsSettings:Button({Name = "Change Color", Callback = function() Library:Notification("Chams color changed!", 2) end})
+ChamsSettings:Colorpicker({Name = "Enemy Chams", Flag = "Chams_EnemyColor", Default = Color3.fromRGB(255, 50, 50)})
+ChamsSettings:Colorpicker({Name = "Team Chams", Flag = "Chams_TeamColor", Default = Color3.fromRGB(50, 255, 50)})
+ChamsSettings:Colorpicker({Name = "Visible Chams", Flag = "Chams_VisibleColor", Default = Color3.fromRGB(0, 255, 255)})
 
 -- ========================================
 -- =========== VISUALS ===================
@@ -1697,6 +1989,9 @@ local SettingsConfig = SettingsPage:Section({Name = "Configuration", Side = "Rig
 SettingsMenu:Keybind({Name = "Menu Key", Flag = "Settings_MenuKey", Default = Enum.KeyCode.End, UseKey = true, Callback = function(Key)
 	if Key then Library.UIKey = Key end
 end})
+SettingsMenu:Colorpicker({Name = "Accent Color", Flag = "Settings_AccentColor", Default = Library.Accent, Callback = function(c)
+	Library:ChangeAccent(c)
+end})
 SettingsMenu:Button({Name = "Change Accent", Callback = function()
 	Library:ChangeAccent(Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255)))
 	Library:Notification("Accent color changed!", 2)
@@ -1704,6 +1999,8 @@ end})
 SettingsMenu:Toggle({Name = "Show Watermark", Flag = "Settings_Watermark", Default = true, Callback = function(v)
 	Watermark:SetVisible(v)
 end})
+SettingsMenu:Toggle({Name = "Show Keybind List", Flag = "Settings_KeybindList", Default = true})
+SettingsMenu:Toggle({Name = "Watermark FPS", Flag = "Settings_WatermarkFPS"})
 
 SettingsConfig:Textbox({Name = "Watermark Text", Flag = "Settings_WatermarkText", State = "VisionWare | v2.0", Callback = function(v)
 	Watermark:UpdateText(v)
@@ -1735,6 +2032,74 @@ UserInputService.InputBegan:Connect(function(Input, GameProcessed)
 	end
 end)
 
+-- Keybind List
+local KeybindList = Instance.new("Frame")
+KeybindList.Name = "KeybindList"
+KeybindList.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+KeybindList.BorderColor3 = Color3.fromRGB(0, 0, 0)
+KeybindList.BorderSizePixel = 0
+KeybindList.Position = UDim2.new(1, -220, 0, 20)
+KeybindList.Size = UDim2.new(0, 200, 0, 20)
+KeybindList.Visible = false
+KeybindList.ZIndex = 999999
+KeybindList.Parent = Library.ScreenGUI
+
+local KeybindOutline = Instance.new("Frame")
+KeybindOutline.Name = "KeybindOutline"
+KeybindOutline.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+KeybindOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+KeybindOutline.Size = UDim2.new(1, 0, 1, 0)
+KeybindOutline.Parent = KeybindList
+
+local KeybindInline = Instance.new("Frame")
+KeybindInline.Name = "KeybindInline"
+KeybindInline.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+KeybindInline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+KeybindInline.BorderSizePixel = 0
+KeybindInline.Position = UDim2.new(0, 1, 0, 1)
+KeybindInline.Size = UDim2.new(1, -2, 1, -2)
+KeybindInline.Parent = KeybindOutline
+
+local KeybindTitle = Instance.new("TextLabel")
+KeybindTitle.Name = "KeybindTitle"
+KeybindTitle.FontFace = Font.fromEnum(Enum.Font.RobotoMono)
+KeybindTitle.Text = "Keybinds"
+KeybindTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeybindTitle.TextSize = 12
+KeybindTitle.TextStrokeTransparency = 0
+KeybindTitle.TextXAlignment = Enum.TextXAlignment.Left
+KeybindTitle.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+KeybindTitle.BackgroundTransparency = 1
+KeybindTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+KeybindTitle.BorderSizePixel = 0
+KeybindTitle.Size = UDim2.new(1, 0, 0, 20)
+KeybindTitle.Parent = KeybindInline
+
+local KeybindAccent = Library:NewInstance("Frame", true)
+KeybindAccent.Name = "Accent"
+KeybindAccent.BackgroundColor3 = Library.Accent
+KeybindAccent.BorderColor3 = Color3.fromRGB(0, 0, 0)
+KeybindAccent.BorderSizePixel = 0
+KeybindAccent.Size = UDim2.new(1, 0, 0, 1)
+KeybindAccent.Parent = KeybindOutline
+
+local KeybindContent = Instance.new("Frame")
+KeybindContent.Name = "KeybindContent"
+KeybindContent.BackgroundTransparency = 1
+KeybindContent.Position = UDim2.new(0, 5, 0, 25)
+KeybindContent.Size = UDim2.new(1, -10, 1, -30)
+KeybindContent.Parent = KeybindInline
+
+local KeybindListLayout = Instance.new("UIListLayout")
+KeybindListLayout.Padding = UDim.new(0, 2)
+KeybindListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+KeybindListLayout.Parent = KeybindContent
+
+Library.KeyList = {Container = KeybindList, Content = KeybindContent}
+
+local frames = 0
+local lastTime = tick()
+
 -- Anti-AFK
 task.spawn(function()
 	while true do
@@ -1745,8 +2110,51 @@ task.spawn(function()
 	end
 end)
 
--- Logic loop for features
+-- FPS Counter & Keybind List updater
 RunService.RenderStepped:Connect(function()
+	frames = frames + 1
+	local currentTime = tick()
+	if currentTime - lastTime >= 1 then
+		local fps = math.floor(frames / (currentTime - lastTime))
+		frames = 0
+		lastTime = currentTime
+		
+		if Library.Flags.Settings_WatermarkFPS and Watermark then
+			Watermark:SetFPS(true)
+			if Watermark.Name then
+				Watermark:UpdateText(Watermark.Name)
+			end
+		end
+		
+		if Library.Flags.Settings_KeybindList and Library.KeyList then
+			Library.KeyList.Container.Visible = true
+			for _, child in pairs(Library.KeyList.Content:GetChildren()) do
+				if child:IsA("TextLabel") then child:Destroy() end
+			end
+			
+			for flag, value in pairs(Library.Flags) do
+				if flag:find("_KEY") and value and value ~= "None" then
+					local keyName = flag:gsub("_KEY", "")
+					local displayName = keyName:gsub("_", " ")
+					local keyText = Library.Keys[value] or tostring(value):gsub("Enum.KeyCode.", ""):gsub("Enum.UserInputType.", "")
+					
+					local KeyLabel = Instance.new("TextLabel")
+					KeyLabel.FontFace = Font.fromEnum(Enum.Font.RobotoMono)
+					KeyLabel.Text = string.format("  %s  [%s]", displayName, keyText)
+					KeyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+					KeyLabel.TextSize = 11
+					KeyLabel.TextStrokeTransparency = 0
+					KeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+					KeyLabel.BackgroundTransparency = 1
+					KeyLabel.Size = UDim2.new(1, 0, 0, 16)
+					KeyLabel.Parent = Library.KeyList.Content
+				end
+			end
+		elseif Library.KeyList then
+			Library.KeyList.Container.Visible = false
+		end
+	end
+	
 	-- Apply flags logic here
 	if Library.Flags.Movement_WalkSpeed then
 		local char = game.Players.LocalPlayer.Character
