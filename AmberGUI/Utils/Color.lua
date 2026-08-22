@@ -88,7 +88,7 @@ function ColorUtils.Lighten(color, amount)
 		math.min(1, color.R + amount),
 		math.min(1, color.G + amount),
 		math.min(1, color.B + amount)
-	end)
+	)
 end
 
 -- Multiply color by scalar
