@@ -9,12 +9,8 @@ local InputUtils = {}
 -- Key code to name mapping (matching the C++ overlay)
 InputUtils.KeyNames = {
 	[Enum.KeyCode.Unknown] = "None",
-	[Enum.KeyCode.LeftMouseButton] = "Mouse 1",
-	[Enum.KeyCode.RightMouseButton] = "Mouse 2",
+	-- Mouse buttons are UserInputType, not KeyCode - handle separately
 	[Enum.KeyCode.Cancel] = "Cancel",
-	[Enum.KeyCode.MiddleMouseButton] = "MButton",
-	[Enum.KeyCode.ButtonX1] = "X1",
-	[Enum.KeyCode.ButtonX2] = "X2",
 	[Enum.KeyCode.Backspace] = "Backspace",
 	[Enum.KeyCode.Tab] = "Tab",
 	[Enum.KeyCode.Clear] = "Clear",
@@ -119,6 +115,13 @@ InputUtils.KeyNames = {
 	[Enum.KeyCode.KeypadMinus] = "Subtract",
 	[Enum.KeyCode.KeypadPeriod] = "Decimal",
 	[Enum.KeyCode.KeypadDivide] = "Divide",
+	
+	-- Mouse buttons (UserInputType)
+	[Enum.UserInputType.MouseButton1] = "Mouse 1",
+	[Enum.UserInputType.MouseButton2] = "Mouse 2",
+	[Enum.UserInputType.MouseButton3] = "MButton",
+	[Enum.UserInputType.MouseButton4] = "X1",
+	[Enum.UserInputType.MouseButton5] = "X2",
 }
 
 -- Reverse mapping
@@ -152,7 +155,16 @@ end
 
 function InputUtils.Keybind:IsDown()
 	if self.key == Enum.KeyCode.Unknown then return false end
-	return UserInputService:IsKeyDown(self.key)
+	
+	-- Handle both KeyCode and UserInputType
+	if typeof(self.key) == "EnumItem" then
+		if self.key.EnumType == Enum.KeyCode then
+			return UserInputService:IsKeyDown(self.key)
+		elseif self.key.EnumType == Enum.UserInputType then
+			return UserInputService:IsMouseButtonPressed(self.key)
+		end
+	end
+	return false
 end
 
 function InputUtils.Keybind:SetKey(key)
@@ -239,6 +251,18 @@ function InputUtils.HotkeyListener:Start()
 		if gameProcessed then return end
 		
 		local keyCode = input.KeyCode
+		local userInputType = input.UserInputType
+		
+		-- Handle mouse buttons
+		if keyCode == Enum.KeyCode.Unknown and userInputType.Name:find("MouseButton") then
+			-- Allow Escape to cancel
+			if userInputType == Enum.UserInputType.MouseButton1 then return end -- Don't bind left click
+			
+			self:Stop()
+			if self.callback then self.callback(userInputType) end
+			return
+		end
+		
 		if keyCode == Enum.KeyCode.Unknown then return end
 		
 		-- Allow Escape to cancel
