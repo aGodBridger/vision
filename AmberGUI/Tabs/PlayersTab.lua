@@ -163,30 +163,31 @@ function PlayersTab.Create(window, globals)
 		
 		for _, player in ipairs(players) do
 			-- Search filter
+			local shouldContinue = false
 			if searchText ~= "" then
 				local nameMatch = player.name:lower():find(searchText, 1, true)
 				local displayMatch = player.displayname:lower():find(searchText, 1, true)
-				if not nameMatch and not displayMatch then continue end
+				if not nameMatch and not displayMatch then shouldContinue = true end
 			end
 			
-			-- Team filter
-			local isClient = player.team == "Client"
-			local isFriendly = player.team == "Friendly"
-			local isEnemy = player.team == "Enemy"
-			local isTarget = globals.visuals.target_only_list and table.find(globals.visuals.target_only_list, player.name)
-			
-			local passFilter = false
-			if filter == 0 then passFilter = true -- All
-			elseif filter == 1 then passFilter = not isFriendly and not isEnemy and not isTarget -- Neutral
-			elseif filter == 2 then passFilter = isFriendly -- Friendly
-			elseif filter == 3 then passFilter = isEnemy or isTarget -- Enemy
-			elseif filter == 4 then passFilter = isTarget -- Target Only
-			end
-			
-			if not passFilter then continue end
-			
-			-- Create player card
-			local card = Instance.new("TextButton")
+			if not shouldContinue then
+				-- Team filter
+				local isClient = player.team == "Client"
+				local isFriendly = player.team == "Friendly"
+				local isEnemy = player.team == "Enemy"
+				local isTarget = globals.visuals.target_only_list and table.find(globals.visuals.target_only_list, player.name)
+				
+				local passFilter = false
+				if filter == 0 then passFilter = true -- All
+				elseif filter == 1 then passFilter = not isFriendly and not isEnemy and not isTarget -- Neutral
+				elseif filter == 2 then passFilter = isFriendly -- Friendly
+				elseif filter == 3 then passFilter = isEnemy or isTarget -- Enemy
+				elseif filter == 4 then passFilter = isTarget -- Target Only
+				end
+				
+				if passFilter then
+					-- Create player card
+					local card = Instance.new("TextButton")
 			card.Name = "PlayerCard_" .. player.name
 			card.Size = UDim2.new(1, 0, 0, 30)
 			card.BackgroundTransparency = 1
@@ -267,6 +268,8 @@ function PlayersTab.Create(window, globals)
 			end)
 		end
 	end
+	end
+end
 	
 	function playersChild:SelectPlayer(player)
 		self.SelectedPlayer = player.name
